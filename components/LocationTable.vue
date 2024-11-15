@@ -1,46 +1,40 @@
 <template>
-  <div class="p-4 space-y-4">
-    <!-- Search Input -->
-    <el-input
-      v-model="search"
-      placeholder="Search..."
-      class="w-full"
-      clearable
-    />
+  <div class="pa-md-4">
 
     <!-- Kecamatan Filter Dropdown -->
-    <el-select
+    <v-select
       v-model="selectedKecamatan"
-      placeholder="Select Kecamatan"
-      class="w-full"
+      :items="uniqueKecamatan"
+      label="Filter by Kecamatan"
       clearable
-    >
-      <el-option
-        v-for="kecamatan in uniqueKecamatan"
-        :key="kecamatan"
-        :label="kecamatan"
-        :value="kecamatan"
-      />
-    </el-select>
+      outlined
+    />
+
+    <!-- Search Input -->
+    <v-text-field
+      v-model="search"
+      label="Search"
+      outlined
+    />
 
     <!-- Data Table -->
-    <el-table :data="filteredData" style="width: 100%">
-      <el-table-column prop="kecamatan" label="Kecamatan" />
-      <el-table-column prop="kelurahan" label="Kelurahan" />
-      <el-table-column prop="noTps" label="NoTps" />
-      <el-table-column prop="alamat" label="Alamat" />
-      <el-table-column label="Location">
-        <template #default="{ row }">
-          <a
-            :href="`https://www.google.com/maps?q=${row.lat},${row.lon}`"
-            target="_blank"
-            class="text-blue-500 hover:underline"
-          >
-            View on Map
-          </a>
-        </template>
-      </el-table-column>
-    </el-table>
+    <v-data-table
+      density="comfortable"
+      :headers="headers"
+      :items="filteredData"
+      item-value="noTps"
+      class="elevation-1"
+    >
+      <template #item.location="{ item }">
+        <a
+          :href="`https://www.google.com/maps?q=${item.lat},${item.lon}`"
+          target="_blank"
+          class="text-blue-500"
+        >
+          View on Map
+        </a>
+      </template>
+    </v-data-table>
   </div>
 </template>
 
@@ -60,32 +54,44 @@ interface DataTps {
 // Reactive variables
 const data = ref<DataTps[]>([]);
 const search = ref<string>('');
-const selectedKecamatan = ref<string>('');
+const selectedKecamatan = ref<string | null>(null);
+
+// Define table headers
+const headers = [
+  { title: 'Kecamatan', value: 'kecamatan' },
+  { title: 'Kelurahan', value: 'kelurahan' },
+  { title: 'No TPS', value: 'noTps' },
+  { title: 'Alamat', value: 'alamat' },
+  { title: 'Lokasi', value: 'location' }
+];
 
 // Computed property for unique Kecamatan options
-const uniqueKecamatan = computed(() => {
-  return [...new Set(data.value.map(item => item.kecamatan))];
-});
+const uniqueKecamatan = computed(() =>
+  [...new Set(data.value.map(item => item.kecamatan))]
+);
 
 // Computed property to filter data based on search and kecamatan
-const filteredData = computed(() => {
-  return data.value.filter((item) => {
-    const matchesSearch = Object.values(item).some((value) =>
+const filteredData = computed(() =>
+  data.value.filter(item => {
+    const matchesSearch = Object.values(item).some(value =>
       value.toString().toLowerCase().includes(search.value.toLowerCase())
     );
     const matchesKecamatan = selectedKecamatan.value
       ? item.kecamatan === selectedKecamatan.value
       : true;
     return matchesSearch && matchesKecamatan;
-  });
-});
+  })
+);
 
-// Function to load data from JSON file
+// Fetch data from JSON
 const loadData = async () => {
   const response = await fetch('/data.json');
   const jsonData = await response.json();
   data.value = jsonData.dataTps.map((item: DataTps) => ({
     ...item,
+    noTps: item.noTps.replace(/^\d+-/, ''), // Removes the prefix before the hyphen
+    kecamatan: item.kecamatan.replace(/^\d+-/, ''), // Removes the prefix before the hyphen
+    kelurahan: item.kelurahan.replace(/^\d+-/, ''), // Removes the prefix before the hyphen
     lat: parseFloat(item.lat),
     lon: parseFloat(item.lon),
   }));
@@ -98,5 +104,5 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Optional additional styles */
+/* Optional styles */
 </style>

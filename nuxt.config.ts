@@ -2,7 +2,9 @@
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
   devtools: { enabled: true },
-  modules: ['@element-plus/nuxt'],
+  modules: [
+    'vuetify-nuxt-module'
+  ],
   css: ['~/assets/css/main.css'],
   // Other configurations
 })
