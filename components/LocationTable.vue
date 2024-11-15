@@ -94,7 +94,7 @@
 
   // Fetch the JSON data
   const loadData = async () => {
-    const response = await fetch('/assets/data/dataTps.json');
+    const response = await fetch('/data.json');
     const jsonData = await response.json();
     data.value = jsonData.dataTps.map((item: DataTps) => ({
       ...item,
